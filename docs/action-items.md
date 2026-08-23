@@ -33,8 +33,8 @@ Recommendations made in chat get logged here or they do not count.
 | ID | Pri | Owner | Status | Item |
 |---|---|---|---|---|
 | [AI-001](#ai-001--add-the-logfire-mcp-server) | P1 | Damara | **DONE** | Add the Logfire MCP server |
-| [AI-007](#ai-007--update-envexample-to-warn-that-nothing-loads-it) | P1 | Damara | TODO | Update `.env.example` — protected file, needs your hand |
-| [AI-002](#ai-002--merge-pr-1) | P1 | Damara | **BLOCKED** | Merge PR #1 — blocked on AI-007 |
+| [AI-007](#ai-007--update-envexample-to-warn-that-nothing-loads-it) | P1 | Damara | **DONE** | Update `.env.example` — protected file, needs your hand |
+| [AI-002](#ai-002--merge-pr-1) | P1 | Damara | TODO | Merge PR #1 — unblocked, ready |
 | [AI-003](#ai-003--close-the-two-git-hook-regex-gaps) | P1 | Agent | BLOCKED | Close the two git-hook regex gaps — needs your approval |
 | [AI-004](#ai-004--decide-llm-content-capture-policy) | P1 | Damara | TODO | Decide LLM content-capture policy — gate for slice 1 |
 | [AI-005](#ai-005--wire-logfire_token-as-a-github-actions-secret) | P2 | Damara | TODO | Wire `LOGFIRE_TOKEN` as a GitHub Actions secret |
@@ -99,8 +99,12 @@ guardrail working, not an obstacle.
 printf '%s\n' "# Logfire project write token." "#" "# NOT needed for local development: the SDK reads" "# .logfire/logfire_credentials.json automatically." "#" "# Needed in CI, containers, and deployed environments, where no" "# credentials file exists." "#" "# WARNING: nothing loads this file automatically. Neither the app nor" "# 'uv run uvicorn app.main:app' reads .env. Either inject the variable" "# directly, or pass --env-file .env to uvicorn. Otherwise LOGFIRE_TOKEN" "# stays unset and telemetry silently degrades to local-only." "#" "# .env is gitignored. Never commit a real token." "LOGFIRE_TOKEN=" > .env.example
 ```
 
-**Done when:** `grep -c '^LOGFIRE_TOKEN=$' .env.example` returns `1` and the file
-contains the WARNING paragraph. Tell the agent and it will commit the file.
+**Status:** DONE 2026-08-23, committed as `a95558c` (14 lines, +11/-6).
+
+**Verification note, recorded honestly:** the agent confirmed only that the file
+changed, not what it contains. Reading `.env*` is blocked by the protected-paths
+hook, and an attempt to `grep` it was denied. That is the guardrail working as
+designed. The content is trusted because Damara ran the exact `printf` above.
 
 ---
 
