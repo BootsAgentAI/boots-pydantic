@@ -12,7 +12,10 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
-    "httpx>=0.28.1",
+    # starlette 1.6 deprecated the httpx test transport in favour of httpx2.
+    # This is only the TestClient transport; the logfire[httpx] extra above
+    # still instruments outbound httpx clients used by later slices.
+    "httpx2>=2.12.0",
 ]
 
 [tool.uv]
