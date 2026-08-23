@@ -224,7 +224,21 @@ You can still verify such a file safely without displaying it:
 grep -c '^LOGFIRE_TOKEN=$' .env.example   # confirms the key exists and is empty
 ```
 
-### The git guardrail hook has two regex gaps
+### The git guardrail hook had three regex gaps — FIXED 2026-08-23
+
+**Status: closed.** Full writeup, test matrix, and rollback in
+[`docs/guardrails/git-hook-hardening.md`](guardrails/git-hook-hardening.md).
+Verify the current state any time with `./docs/guardrails/hook_harness.sh`.
+
+Kept here because the *class* of bug recurs: matching command text is a proxy for
+matching intent, and proxies drift. `git -c user.name=X commit`,
+`git push -u origin main`, and `git push origin HEAD:main` all walked past
+patterns that assumed adjacent tokens.
+
+The asymmetry worth remembering: a false positive costs one message telling you to
+branch first. A false negative costs an unreviewed commit on `main`. Tune loose.
+
+The original description, retained for context:
 
 The hook matches command text assuming adjacent tokens, so an intervening flag
 defeats it:
@@ -241,6 +255,22 @@ accidentally.
 disabling it. The durable fix is to match loosely on the command
 (`git[[:space:]].*[[:space:]]commit`) and rely on the resolved-state check the
 hook already performs.
+
+### The bypass-flag rule matches substrings anywhere
+
+**Symptom:** A command is blocked for a "forbidden bypass flag" when it is not
+using one — for example a command that writes a test fixture *mentioning*
+`--no-verify`.
+
+**Cause:** That rule greps the whole command string with no word boundary or
+context, so any occurrence anywhere trips it.
+
+**Fix:** None applied. It fails safe, and loosening it would weaken a real
+guardrail to solve a cosmetic annoyance. Work around it by creating the file with
+the Write tool instead of a shell heredoc — which is the better tool for the job
+anyway. Do **not** obfuscate the string to slip past it.
+
+Hit for real while building the test harness for the hook-hardening change.
 
 ### Compound commands defeat the branch check
 
