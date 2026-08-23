@@ -1,0 +1,11 @@
+# Logfire credentials — contains a project write token. Never commit.
+.logfire/
+
+# Local secrets
+.env
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
