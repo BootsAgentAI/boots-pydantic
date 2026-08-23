@@ -1,0 +1,26 @@
+[project]
+name = "logfire-sandbox"
+version = "0.1.0"
+description = "Reference system for AI observability, evaluation, and retrieval competencies."
+requires-python = ">=3.10"
+dependencies = [
+    "logfire[fastapi,httpx,system-metrics]>=4.41.0",
+    "fastapi>=0.141.1",
+    "uvicorn[standard]>=0.52.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    # starlette 1.6 deprecated the httpx test transport in favour of httpx2.
+    # This is only the TestClient transport; the logfire[httpx] extra above
+    # still instruments outbound httpx clients used by later slices.
+    "httpx2>=2.12.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
