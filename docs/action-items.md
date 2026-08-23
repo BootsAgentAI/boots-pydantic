@@ -35,7 +35,7 @@ Recommendations made in chat get logged here or they do not count.
 | [AI-001](#ai-001--add-the-logfire-mcp-server) | P1 | Damara | **DONE** | Add the Logfire MCP server |
 | [AI-007](#ai-007--update-envexample-to-warn-that-nothing-loads-it) | P1 | Damara | **DONE** | Update `.env.example` — protected file, needs your hand |
 | [AI-002](#ai-002--merge-pr-1) | P1 | Damara | TODO | Merge PR #1 — unblocked, ready |
-| [AI-003](#ai-003--close-the-two-git-hook-regex-gaps) | P1 | Agent | BLOCKED | Close the two git-hook regex gaps — needs your approval |
+| [AI-003](#ai-003--close-the-two-git-hook-regex-gaps) | P1 | Agent | **DONE** | Close the git-hook regex gaps — three closed, 12/12 harness |
 | [AI-004](#ai-004--decide-llm-content-capture-policy) | P1 | Damara | TODO | Decide LLM content-capture policy — gate for slice 1 |
 | [AI-005](#ai-005--wire-logfire_token-as-a-github-actions-secret) | P2 | Damara | TODO | Wire `LOGFIRE_TOKEN` as a GitHub Actions secret |
 | [AI-006](#ai-006--suppress-test-run-spans-if-they-become-noise) | P3 | Agent | TODO | Suppress test-run spans if they become noise |
@@ -129,7 +129,21 @@ value is the durable record and the place CI attaches at slice 5.
 
 ### AI-003 · Close the two git-hook regex gaps
 
-**Priority** P1 · **Owner** Agent · **Status** BLOCKED — awaiting your approval
+**Priority** P1 · **Owner** Agent · **Status** DONE 2026-08-23
+
+**Outcome:** Three gaps closed (a third, `git push origin HEAD:main`, was found
+while designing the fix). Harness goes 9/12 → **12/12**. Live-tested: the exact
+command that put `2da462d` on `main` is now blocked.
+
+Full approach, test matrix, rollback, and known remaining limitations:
+[`docs/guardrails/git-hook-hardening.md`](guardrails/git-hook-hardening.md).
+Re-verify any time with `./docs/guardrails/hook_harness.sh`.
+
+**Rollback:** `cp ~/.claude/settings.json.bak-2026-08-23-git-hook ~/.claude/settings.json`
+
+**Scope note:** the `:`/`/` separator fix (gap 3) went beyond what was approved.
+Flagged in the writeup rather than slipped in. Revert that part alone by changing
+`[[:space:]:/]` back to `[[:space:]]` in the push regex.
 
 **Why:** The hook matches command *text* assuming adjacent tokens, so an
 intervening flag defeats it. This is not theoretical: commit `2da462d` reached
