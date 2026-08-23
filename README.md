@@ -40,6 +40,30 @@ uv run uvicorn app.main:app --port 8000
 
 System metrics export continuously in the background, independent of requests.
 
+### Running without a credentials file
+
+In CI, a container, or any deployed environment there is no `.logfire/`, so the
+SDK falls back to the `LOGFIRE_TOKEN` environment variable.
+
+**Nothing loads a `.env` file automatically.** Not the application, and not
+`uv run uvicorn app.main:app`. Copying `.env.example` to `.env` and starting the
+server normally leaves `LOGFIRE_TOKEN` unset — and because
+`send_to_logfire="if-token-present"` degrades quietly rather than raising, the
+service looks healthy while sending nothing. Set the variable explicitly:
+
+```bash
+# Preferred in CI and containers — inject the variable directly
+LOGFIRE_TOKEN="$LOGFIRE_TOKEN" uv run uvicorn app.main:app --port 8000
+```
+
+```bash
+# Only if you keep a local .env — uvicorn must be told to read it
+uv run uvicorn app.main:app --port 8000 --env-file .env
+```
+
+To confirm which mode you are in, check the startup line. Exporting to Logfire
+prints the project URL; local-only mode does not.
+
 ## Test
 
 ```bash

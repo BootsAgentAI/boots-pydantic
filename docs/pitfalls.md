@@ -147,6 +147,50 @@ This is acceptable noise in a sandbox and doubles as continuous proof the
 pipeline works. If it ever needs suppressing, add a pytest fixture setting
 `LOGFIRE_SEND_TO_LOGFIRE=false` — do not change `configure_telemetry()`.
 
+### `LogfireLoggingHandler` does not lower the log threshold
+
+**Symptom:** `logger.info(...)` in application code never appears in Logfire,
+even though the handler is attached and spans arrive normally.
+
+**Cause:** A fresh root logger sits at `WARNING`. Attaching a handler does not
+change that. The record is discarded by the *logger* before any handler is
+consulted, so the bridge looks wired up and delivers nothing.
+
+**Fix:** Raise the level for the application's own package, not the root, so
+third-party libraries do not flood Logfire:
+
+```python
+logging.getLogger("app").setLevel(logging.INFO)
+```
+
+**How it was caught:** a Codex review bot on PR #1, after the README, the PR
+description, and this file had all already claimed `/health` emitted a stdlib
+record. Measured proof beats plausible reasoning:
+
+```python
+logging.getLogger("app.main").isEnabledFor(logging.INFO)   # was False
+```
+
+Guarded by `tests/test_telemetry.py::test_app_info_records_reach_handlers`.
+
+### Nothing loads `.env` automatically
+
+**Symptom:** A deployed service with `LOGFIRE_TOKEN` in a `.env` file sends no
+telemetry, reports no error, and looks healthy.
+
+**Cause:** Neither the application nor `uv run uvicorn app.main:app` reads
+`.env`. `python-dotenv` is installed, but only as a `uvicorn[standard]` extra
+that is used solely when `--env-file` is passed. Combined with
+`send_to_logfire="if-token-present"`, a missing token degrades silently to
+local-only.
+
+**Fix:** Inject the variable directly (preferred in CI and containers), or pass
+`--env-file .env` to uvicorn. Never assume a `.env` on disk is loaded.
+
+**Why this one matters:** the silent-fallback failure mode arriving through
+*documentation* rather than code. The instruction "copy `.env.example` to `.env`
+and fill it in" was itself the bug.
+
 ### First request is slow; that is not a regression
 
 Observed on identical `GET /health` calls: **15.0ms** first, **960µs** after.

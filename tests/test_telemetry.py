@@ -45,6 +45,35 @@ def test_configures_without_credentials_and_preserves_log_handlers(tmp_path):
     assert "OK" in result.stdout
 
 
+def test_app_info_records_reach_handlers():
+    """The stdlib bridge is worthless if INFO records die before the handlers.
+
+    Regression guard. A fresh root logger defaults to WARNING, and attaching
+    LogfireLoggingHandler does not lower that threshold, so `logger.info(...)`
+    in app.main was silently discarded and never reached Logfire — while the
+    README claimed it did.
+    """
+    from app.telemetry import APP_LOGGER_NAME, configure_telemetry
+
+    configure_telemetry()
+
+    captured: list[str] = []
+
+    class Capture(logging.Handler):
+        def emit(self, record: logging.LogRecord) -> None:
+            captured.append(record.getMessage())
+
+    handler = Capture()
+    root = logging.getLogger()
+    root.addHandler(handler)
+    try:
+        logging.getLogger(f"{APP_LOGGER_NAME}.main").info("health check served")
+    finally:
+        root.removeHandler(handler)
+
+    assert "health check served" in captured
+
+
 def test_configure_telemetry_is_idempotent():
     """Repeated calls must not stack duplicate Logfire log handlers."""
     import logfire

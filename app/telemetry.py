@@ -12,6 +12,7 @@ import logfire
 
 LOGFIRE_BASE_URL = "https://logfire-us.pydantic.dev"
 SERVICE_NAME = "logfire-sandbox"
+APP_LOGGER_NAME = "app"
 
 _configured = False
 
@@ -33,6 +34,13 @@ def configure_telemetry() -> None:
         advanced=logfire.AdvancedOptions(base_url=LOGFIRE_BASE_URL),
     )
     logfire.instrument_system_metrics()
+
+    # A fresh root logger sits at WARNING, so this application's own INFO
+    # records would be discarded before any handler saw them — making the
+    # bridge below a bridge to nowhere. Raise the threshold for this app's
+    # package only, leaving third-party loggers at their own defaults so
+    # library chatter does not flood Logfire.
+    logging.getLogger(APP_LOGGER_NAME).setLevel(logging.INFO)
 
     # addHandler, never `handlers = [...]`: stdlib logging reaches Logfire
     # in addition to whatever handlers the host application already installed.
