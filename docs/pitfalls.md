@@ -4,6 +4,9 @@ Running log of things that cost time, surprised us, or would have been guessed
 wrong. Append as they happen — each entry is symptom → cause → fix, so it can be
 searched by the symptom you're actually staring at.
 
+**This file is reference, not a queue.** Anything requiring action lives in
+[`docs/action-items.md`](action-items.md) with an owner and a definition of done.
+
 Newest slice at the bottom.
 
 ---
@@ -103,6 +106,12 @@ Check before installing:
 ```bash
 curl -s https://pypi.org/pypi/logfire/json | \
   python3 -c "import json,sys; print(sorted(json.load(sys.stdin)['info']['provides_extra']))"
+```
+
+Confirmed output, run by Damara 2026-08-23 — the authoritative list of all 28:
+
+```
+['aiohttp', 'aiohttp-client', 'aiohttp-server', 'asgi', 'asyncpg', 'aws-lambda', 'celery', 'datasets', 'django', 'dspy', 'fastapi', 'flask', 'gateway', 'google-genai', 'httpx', 'litellm', 'mysql', 'psycopg', 'psycopg2', 'pymongo', 'redis', 'requests', 'sqlalchemy', 'sqlite3', 'starlette', 'system-metrics', 'variables', 'wsgi']
 ```
 
 ### starlette 1.6 deprecated the httpx test transport
