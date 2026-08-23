@@ -32,8 +32,9 @@ Recommendations made in chat get logged here or they do not count.
 
 | ID | Pri | Owner | Status | Item |
 |---|---|---|---|---|
-| [AI-001](#ai-001--add-the-logfire-mcp-server) | P1 | Damara | TODO | Add the Logfire MCP server |
-| [AI-002](#ai-002--merge-pr-1) | P1 | Damara | TODO | Merge PR #1 |
+| [AI-001](#ai-001--add-the-logfire-mcp-server) | P1 | Damara | **DONE** | Add the Logfire MCP server |
+| [AI-007](#ai-007--update-envexample-to-warn-that-nothing-loads-it) | P1 | Damara | TODO | Update `.env.example` — protected file, needs your hand |
+| [AI-002](#ai-002--merge-pr-1) | P1 | Damara | **BLOCKED** | Merge PR #1 — blocked on AI-007 |
 | [AI-003](#ai-003--close-the-two-git-hook-regex-gaps) | P1 | Agent | BLOCKED | Close the two git-hook regex gaps — needs your approval |
 | [AI-004](#ai-004--decide-llm-content-capture-policy) | P1 | Damara | TODO | Decide LLM content-capture policy — gate for slice 1 |
 | [AI-005](#ai-005--wire-logfire_token-as-a-github-actions-secret) | P2 | Damara | TODO | Wire `LOGFIRE_TOKEN` as a GitHub Actions secret |
@@ -43,7 +44,10 @@ Recommendations made in chat get logged here or they do not count.
 
 ### AI-001 · Add the Logfire MCP server
 
-**Priority** P1 · **Owner** Damara · **Status** TODO
+**Priority** P1 · **Owner** Damara · **Status** DONE 2026-08-23 — connected and
+authenticated. Note it is registered in project-local config
+(`~/.claude.json`, scoped to this repo), and only sessions started *after*
+registration can see it.
 **Blocks:** programmatic verification in slice 1. Without it, every "did the data
 arrive?" check is you looking at the Live view by hand.
 
@@ -75,9 +79,34 @@ account (`boots`) that `uvx logfire whoami` reports.
 
 ---
 
-### AI-002 · Merge PR #1
+### AI-007 · Update `.env.example` to warn that nothing loads it
 
 **Priority** P1 · **Owner** Damara · **Status** TODO
+**Blocks:** AI-002 (merging PR #1)
+
+**Why:** The current file says "Copy this file to .env and fill it in." Nothing
+loads `.env` — not the app, not `uv run uvicorn`. Combined with
+`send_to_logfire="if-token-present"`, which degrades quietly instead of raising,
+following that instruction produces a deployed service that reports healthy while
+sending no telemetry. The instruction is the bug.
+
+`.env*` is on the protected-paths list, so the agent cannot write it. That is the
+guardrail working, not an obstacle.
+
+**Steps** — single line, no heredoc:
+
+```bash
+printf '%s\n' "# Logfire project write token." "#" "# NOT needed for local development: the SDK reads" "# .logfire/logfire_credentials.json automatically." "#" "# Needed in CI, containers, and deployed environments, where no" "# credentials file exists." "#" "# WARNING: nothing loads this file automatically. Neither the app nor" "# 'uv run uvicorn app.main:app' reads .env. Either inject the variable" "# directly, or pass --env-file .env to uvicorn. Otherwise LOGFIRE_TOKEN" "# stays unset and telemetry silently degrades to local-only." "#" "# .env is gitignored. Never commit a real token." "LOGFIRE_TOKEN=" > .env.example
+```
+
+**Done when:** `grep -c '^LOGFIRE_TOKEN=$' .env.example` returns `1` and the file
+contains the WARNING paragraph. Tell the agent and it will commit the file.
+
+---
+
+### AI-002 · Merge PR #1
+
+**Priority** P1 · **Owner** Damara · **Status** BLOCKED on AI-007
 
 **Why:** Slice 1 branches from `main`. Leaving slice 0 unmerged means slice 1
 either branches from a feature branch or duplicates its work.
@@ -210,5 +239,8 @@ away, with evidence.
 | `.env.example` documents `LOGFIRE_TOKEN` | **DONE** | File exists, 9 lines, `grep -c '^LOGFIRE_TOKEN=$'` returns 1 — key present, value empty |
 | Telemetry reaches Logfire | **DONE** | Live view, filtered `service_name = 'logfire-sandbox'`: `GET /health → 200`, `GET /boom → 500` with exception, `fastapi` instrumentation badge |
 | System metrics enabled | **DONE** | `logfire.instrument_system_metrics()` in `configure_telemetry()` |
-| stdlib logging bridged to Logfire | **DONE** | `LogfireLoggingHandler` attached additively (`addHandler`, never `handlers = [...]`) |
-| Slice 0 test suite | **DONE** | `uv run pytest` — 4 passed |
+| stdlib logging bridged to Logfire | **DONE — was wrong until `b49c4ad`** | Handler was attached additively, but the root logger sat at `WARNING`, so app INFO records were discarded before reaching it. This row previously claimed DONE while the bridge delivered nothing. Now also raises the `app` package to INFO; guarded by `test_app_info_records_reach_handlers` and confirmed end-to-end (`health check served` in the server log and in Logfire). |
+| `.env` is never auto-loaded | **DONE — documented, not fixed in code** | Nothing loads `.env`; `python-dotenv` exists only as a `uvicorn[standard]` extra used with `--env-file`. README now documents direct injection and `--env-file`. `.env.example` still pending — see AI-007. |
+| Slice 0 test suite | **DONE** | `uv run pytest` — 5 passed |
+| Damara ran claude mcp add logfire --transport http https://logfire-us.pydantic.dev/mcp: | **DONE** | Added HTTP MCP server logfire with URL: https://logfire-us.pydantic.dev/mcp to local config: File modified: /Users agentboots/.claude.json [project: /Users/agentboots/projects/boots/pydantic] |
+| Damara authenticated claude /mcp on new session | **DONE** | 
