@@ -81,7 +81,7 @@ account (`boots`) that `uvx logfire whoami` reports.
 
 ### AI-007 · Update `.env.example` to warn that nothing loads it
 
-**Priority** P1 · **Owner** Damara · **Status** TODO
+**Priority** P1 · **Owner** Damara · **Status** DONE 
 **Blocks:** AI-002 (merging PR #1)
 
 **Why:** The current file says "Copy this file to .env and fill it in." Nothing
@@ -110,7 +110,7 @@ designed. The content is trusted because Damara ran the exact `printf` above.
 
 ### AI-002 · Merge PR #1
 
-**Priority** P1 · **Owner** Damara · **Status** BLOCKED on AI-007
+**Priority** P1 · **Owner** Damara · **Status** DONE
 
 **Why:** Slice 1 branches from `main`. Leaving slice 0 unmerged means slice 1
 either branches from a feature branch or duplicates its work.
